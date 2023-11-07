@@ -195,3 +195,29 @@ BEGIN
   v_result := get_employee_department_count('United States of America');
   DBMS_OUTPUT.PUT_LINE('Wynik: ' || v_result);
 END;
+
+
+-- WYZWALACZE 1
+-- TABELA POMOCNICZA
+CREATE TABLE archiwum_departamentow (
+    id NUMBER,
+    nazwa VARCHAR2(100),
+    data_zamknięcia DATE,
+    ostatni_manager VARCHAR2(100)
+);
+-- WYZWALACZ
+CREATE OR REPLACE TRIGGER archiwum_departamentow_trigger
+AFTER DELETE ON departments
+FOR EACH ROW
+DECLARE
+    v_manager_first_name employees.first_name%TYPE;
+    v_manager_last_name employees.last_name%TYPE;
+BEGIN
+    SELECT first_name, last_name
+    INTO v_manager_first_name, v_manager_last_name
+    FROM employees
+    WHERE employee_id = :OLD.manager_id;
+
+    INSERT INTO archiwum_departamentow (id, nazwa, data_zamknięcia, ostatni_manager)
+    VALUES (:OLD.department_id, :OLD.department_name, SYSDATE, v_manager_first_name || ' ' || v_manager_last_name);
+END;
